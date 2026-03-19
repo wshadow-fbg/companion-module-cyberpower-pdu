@@ -7,9 +7,10 @@ function ab2str(buf) {
 }
 
 function tenthsToString(tenths) {
-	const amps = tenths / 10;
-	return amps.toFixed(1);
-    }
+	if (typeof tenths !== 'number') return ''
+	const amps = tenths / 10
+	return amps.toFixed(1)
+}
 
 module.exports = {
 	getInfo: function(host, communityRead) {
@@ -102,9 +103,7 @@ module.exports = {
 		'1.3.6.1.4.1.3808.1.1.3.3.5.1.1.4.6', 
 		'1.3.6.1.4.1.3808.1.1.3.3.5.1.1.4.7', 
 		'1.3.6.1.4.1.3808.1.1.3.3.5.1.1.4.8', 
-		'1.3.6.1.4.1.3808.1.1.3.2.3.1.1.2.1', // Bank amps in 0.1
-		'1.3.6.1.4.1.3808.1.1.3.2.3.1.1.6.1', // Bank volts in 0.1
-		'1.3.6.1.4.1.3808.1.1.3.2.3.1.1.7.1', // Bank Watts
+		'1.3.6.1.4.1.3808.1.1.3.2.3.1.1.2.2', // Bank amps in 0.1 (confirmed: loadStatusBankNumber.2 = 1)
 		
 		];
 
@@ -140,10 +139,6 @@ module.exports = {
 				's5Status', 's6Status', 's7Status', 's8Status'
 			];
 
-			const measurementKeys = [
-				'bankAmps', 'bankVolts'
-			]
-
 			let dataChanged = false;
 
 			for (let i = 0; i < statusKeys.length; i++) {
@@ -156,18 +151,20 @@ module.exports = {
 				}
 			}
 
-			for (let i = 0; i < measurementKeys.length; i++){
-				const key = measurementKeys[i];
-				const newValue = tenthsToString(pdu_status[i+8]); //pdu_status starts at 0, and we want 8 and 9
-
-				if (self.DATA[key] !== newValue) {
-					self.DATA[key] = newValue;
-					dataChanged = true;
-				}
+			const bankAmps = tenthsToString(pdu_status[8]); // pdu_status starts at 0
+			if (self.DATA.bankAmps !== bankAmps) {
+				self.DATA.bankAmps = bankAmps;
+				dataChanged = true;
 			}
 
-			if (self.DATA.bankWatts !== pdu_status[10]) {
-				self.DATA.bankWatts = pdu_status[10];
+			// This MIB branch does not expose volts/watts on this model.
+			if (self.DATA.bankVolts !== '') {
+				self.DATA.bankVolts = '';
+				dataChanged = true;
+			}
+
+			if (self.DATA.bankWatts !== '') {
+				self.DATA.bankWatts = '';
 				dataChanged = true;
 			}
 
